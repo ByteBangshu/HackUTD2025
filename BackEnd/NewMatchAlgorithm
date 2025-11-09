@@ -1,0 +1,89 @@
+import pandas as pd
+
+# Load the data
+df = pd.read_csv("toyota.csv")
+
+# Clean column names (remove extra spaces)
+df.columns = df.columns.str.strip()
+
+print("=== Toyota Car Finder ===\n")
+print(f"Total records: {len(df)}\n")
+
+print("Enter your preferences (leave blank to skip any filter):\n")
+
+# Get user inputs
+year = input("Enter year: ").strip()
+max_price = input("Enter max price: ").strip()
+transmission = input("Enter transmission type (Manual/Automatic): ").strip()
+max_mileage = input("Enter max mileage: ").strip()
+fuelType = input("Enter fuel type (Gasoline/Diesel/Hybrid): ").strip()
+mpg = input("Enter minimum mpg: ").strip()
+financeMonthly = input("Enter max finance monthly: ").strip()
+leaseMonthly = input("Enter max lease monthly: ").strip()
+horsepower = input("Enter minimum horsepower: ").strip()
+
+# Start with all data
+filtered_df = df.copy()
+
+# Apply filters one by one
+if year:
+    filtered_df = filtered_df[filtered_df['year'] == int(year)]
+    
+if max_price:
+    filtered_df = filtered_df[filtered_df['price'] <= float(max_price)]
+    
+if transmission:
+    filtered_df = filtered_df[filtered_df['transmission'].str.strip() == transmission]
+    
+if max_mileage:
+    filtered_df = filtered_df[filtered_df['mileage'] <= float(max_mileage)]
+    
+if fuelType:
+    filtered_df = filtered_df[filtered_df['fuelType'].str.strip() == fuelType]
+
+if mpg:
+    filtered_df = filtered_df[filtered_df['mpg'] >= float(mpg)]
+
+if financeMonthly:
+    filtered_df = filtered_df[filtered_df['finance_monthly'] <= float(financeMonthly)]
+
+if leaseMonthly:
+    filtered_df = filtered_df[filtered_df['lease_monthly'] <= float(leaseMonthly)]
+
+if horsepower:
+    filtered_df = filtered_df[filtered_df['horsepower'] >= float(horsepower)]
+    
+# Find and display all matches (sorted by price)
+if not filtered_df.empty:
+    # Sort by price (lowest first)
+    all_matches = filtered_df.sort_values(by='price')
+    
+    print("\n" + "="*70)
+    print(f"ALL MATCHING MODELS ({len(all_matches)} found):")
+    print("="*70 + "\n")
+    
+    # Display each match
+    for idx, (_, row) in enumerate(all_matches.iterrows(), 1):
+        print(f"Match #{idx}:")
+        print("-" * 70)
+        print(f"Model:            {row['model']}")
+        print(f"Year:             {row['year']}")
+        print(f"Price:            ${row['price']:,.2f}")
+        print(f"Transmission:     {row['transmission']}")
+        print(f"Mileage:          {row['mileage']:,.0f} miles")
+        print(f"Fuel Type:        {row['fuelType']}")
+        print(f"MPG:              {row['mpg']}")
+        print(f"Finance Monthly:  ${row['finance_monthly']:.2f}")
+        print(f"Lease Monthly:    ${row['lease_monthly']:.2f}")
+        print(f"Horsepower:       {row['horsepower']}")
+        print("-" * 70 + "\n")
+    
+    print("="*70)
+    print(f"Total matches found: {len(all_matches)}")
+    print(f"Best deal (lowest price): ${all_matches.iloc[0]['price']:,.2f}")
+    print("="*70)
+else:
+    print("\n" + "="*70)
+    print("No matching models found based on your criteria.")
+    print("Try adjusting your filters.")
+    print("="*70)
