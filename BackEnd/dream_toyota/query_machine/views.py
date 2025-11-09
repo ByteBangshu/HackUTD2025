@@ -15,16 +15,8 @@ def login(request):
 @csrf_exempt
 def predict(request):
     """
-    API endpoint to find all matching car models based on user preferences using CSV data
-    Returns all matches sorted by price (lowest first)
-    
-    Numeric parameters allow ±10% tolerance:
-    - price (max)
-    - mileage (max)
-    - mpg (min)
-    - finance_monthly (max)
-    - lease_monthly (max)
-    - horsepower (min)
+    API endpoint to find all matching car models based on user preferences using CSV data.
+    Returns all matches sorted by price (lowest first).
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=400)
@@ -32,16 +24,16 @@ def predict(request):
     try:
         data = json.loads(request.body.decode())
         
-        # Extract form data
-        year = data.get('year')
-        max_price = data.get('price')
-        transmission = data.get('transmission')
-        max_mileage = data.get('mileage')
-        fuel_type = data.get('fuelType')
-        min_mpg = data.get('mpg')
-        max_finance_monthly = data.get('finance_monthly')
-        max_lease_monthly = data.get('lease_monthly')
-        min_horsepower = data.get('horsepower')
+        # Extract form data from user input
+        year = data.get('year', '').strip()
+        max_price = data.get('price', '').strip()
+        transmission = data.get('transmission', '').strip()
+        max_mileage = data.get('mileage', '').strip()
+        fuel_type = data.get('fuelType', '').strip()
+        min_mpg = data.get('mpg', '').strip()
+        max_finance_monthly = data.get('finance_monthly', '').strip()
+        max_lease_monthly = data.get('lease_monthly', '').strip()
+        min_horsepower = data.get('horsepower', '').strip()
         
         # Load the CSV file
         csv_path = os.path.join(settings.BASE_DIR, 'toyota.csv')
@@ -60,49 +52,43 @@ def predict(request):
         # Start with all data
         filtered_df = df.copy()
         
-        # Apply filters one by one with ±10% tolerance for numeric fields
+        # Apply filters one by one (same logic as test.py)
         
-        # Year - exact match (no tolerance)
+        # Year - exact match
         if year:
             filtered_df = filtered_df[filtered_df['year'] == int(year)]
         
-        # Price - max with +10% tolerance (user can go 10% over budget)
+        # Price - maximum threshold
         if max_price:
-            price_threshold = float(max_price) * 1.10  # Allow 10% over
-            filtered_df = filtered_df[filtered_df['price'] <= price_threshold]
+            filtered_df = filtered_df[filtered_df['price'] <= float(max_price)]
         
-        # Transmission - exact match (no tolerance)
+        # Transmission - exact match
         if transmission:
             filtered_df = filtered_df[filtered_df['transmission'].str.strip() == transmission]
         
-        # Mileage - max with +10% tolerance
+        # Mileage - maximum threshold
         if max_mileage:
-            mileage_threshold = float(max_mileage) * 1.10  # Allow 10% over
-            filtered_df = filtered_df[filtered_df['mileage'] <= mileage_threshold]
+            filtered_df = filtered_df[filtered_df['mileage'] <= float(max_mileage)]
         
-        # Fuel Type - exact match (no tolerance)
+        # Fuel Type - exact match
         if fuel_type:
             filtered_df = filtered_df[filtered_df['fuelType'].str.strip() == fuel_type]
         
-        # MPG - minimum with -10% tolerance (user accepts 10% less efficient)
+        # MPG - minimum threshold
         if min_mpg:
-            mpg_threshold = float(min_mpg) * 0.90  # Allow 10% less
-            filtered_df = filtered_df[filtered_df['mpg'] >= mpg_threshold]
+            filtered_df = filtered_df[filtered_df['mpg'] >= float(min_mpg)]
         
-        # Finance Monthly - max with +10% tolerance
+        # Finance Monthly - maximum threshold
         if max_finance_monthly:
-            finance_threshold = float(max_finance_monthly) * 1.10  # Allow 10% over
-            filtered_df = filtered_df[filtered_df['finance_monthly'] <= finance_threshold]
+            filtered_df = filtered_df[filtered_df['finance_monthly'] <= float(max_finance_monthly)]
         
-        # Lease Monthly - max with +10% tolerance
+        # Lease Monthly - maximum threshold
         if max_lease_monthly:
-            lease_threshold = float(max_lease_monthly) * 1.10  # Allow 10% over
-            filtered_df = filtered_df[filtered_df['lease_monthly'] <= lease_threshold]
+            filtered_df = filtered_df[filtered_df['lease_monthly'] <= float(max_lease_monthly)]
         
-        # Horsepower - minimum with -10% tolerance (user accepts 10% less power)
+        # Horsepower - minimum threshold
         if min_horsepower:
-            horsepower_threshold = float(min_horsepower) * 0.90  # Allow 10% less
-            filtered_df = filtered_df[filtered_df['horsepower'] >= horsepower_threshold]
+            filtered_df = filtered_df[filtered_df['horsepower'] >= float(min_horsepower)]
         
         # Find and return all matches (sorted by price)
         if not filtered_df.empty:
@@ -139,7 +125,6 @@ def predict(request):
                 'best_match': best_match,
                 'all_matches': matches_list,
                 'best_price': f"${all_matches.iloc[0]['price']:,.2f}",
-                'tolerance_applied': '±10% tolerance applied to numeric parameters',
                 # For backward compatibility with existing frontend
                 'model': best_match['model'],
                 'year': str(best_match['year']),
@@ -158,7 +143,7 @@ def predict(request):
             return JsonResponse({
                 'success': False,
                 'model': 'No match found',
-                'message': 'No matching models found based on your criteria (even with ±10% tolerance). Try adjusting your filters.',
+                'message': 'No matching models found based on your criteria. Try adjusting your filters.',
                 'total_matches': 0,
                 'all_matches': []
             })
@@ -175,6 +160,11 @@ def predict(request):
             "error": f"Missing column in CSV: {str(e)}",
             "message": "Please check your CSV file has all required columns"
         }, status=500)
+    except ValueError as e:
+        return JsonResponse({
+            "error": f"Invalid input value: {str(e)}",
+            "message": "Please ensure all numeric fields contain valid numbers"
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             "error": str(e),
