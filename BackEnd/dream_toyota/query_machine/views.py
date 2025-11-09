@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from collections import defaultdict
+import pandas as pd
 
 def index(request):
     return render(request, 'index.html')
@@ -33,16 +35,32 @@ def predict(request):
         
         # TODO: Implement actual ML model prediction logic here
         # For now, returning a mock response
+        df: pd.DataFrame = pd.read_csv('toyota.csv')
+        temp_mixed_list = []
+        recommended_models = defaultdict()
+        for index, row in df.iterrows():
+          temp_mixed_list.append(row['year'])
+          temp_mixed_list.append(row['price'])
+          temp_mixed_list.append(row['transmission'])
+          temp_mixed_list.append(row['mileage'])
+          temp_mixed_list.append(row['fuelType'])
+          temp_mixed_list.append(row['mpg'])
+          temp_mixed_list.append(row['finance_monthly'])
+          temp_mixed_list.append(row['lease_monthly'])
+          temp_mixed_list.append(row['horsepower'])
+          recommended_models[temp_mixed_list] = row['model']
+          temp_mixed_list.clear()
         
-        # Mock response based on criteria
-        recommended_models = {
-            'Gasoline': 'Toyota Camry SE',
-            'Hybrid': 'Toyota Prius Prime',
-            'Diesel': 'Toyota Hilux',
-            'Electric': 'Toyota bZ4X'
-        }
+        # # Mock response based on criteria
+        # recommended_models = {
+        #     'Gasoline': 'Toyota Camry SE',
+        #     'Hybrid': 'Toyota Prius Prime',
+        #     'Diesel': 'Toyota Hilux',
+        #     'Electric': 'Toyota bZ4X'
+        # }
+        user_input = [year, price, transmission, mileage, fuel_type, mpg, finance_monthly, lease_monthly, horsepower]
         
-        model = recommended_models.get(fuel_type, 'Toyota Camry')
+        model = recommended_models.get(user_input, 'Toyota Camry')
         
         response_data = {
             'model': model,
