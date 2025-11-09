@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toyota Car Finder - AI Vehicle Matcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom slider styling with RED track */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #dc2626;
+            height: 0.5rem;
+            border-radius: 0.5rem;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            background: #dc2626;
+            height: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background: #991b1b;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]::-moz-range-track {
+            background: #dc2626;
+            height: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background: #991b1b;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .spinner {
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            width: 1.25rem;
+            height: 1.25rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Dark mode styles */
+        .dark {
+            background-color: #111827;
+        }
+
+        .dark .bg-white {
+            background-color: #1f2937;
+        }
+
+        .dark .bg-gray-50 {
+            background-color: #111827;
+        }
+
+        .dark .text-gray-900 {
+            color: #f9fafb;
+        }
+
+        .dark .text-gray-600 {
+            color: #9ca3af;
+        }
+
+        .dark .text-gray-500 {
+            color: #6b7280;
+        }
+
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+
+        .dark select,
+        .dark input[type="range"] {
+            background-color: #374151;
+            color: #f9fafb;
+        }
+
+        .dark .bg-green-50 {
+            background-color: #064e3b;
+        }
+
+        .dark .border-green-200 {
+            border-color: #047857;
+        }
+
+        .dark .text-green-600 {
+            color: #34d399;
+        }
+
+        .dark .bg-red-50 {
+            background-color: #7f1d1d;
+        }
+
+        .dark .border-red-200 {
+            border-color: #991b1b;
+        }
+
+        .dark .text-red-600 {
+            color: #fca5a5;
+        }
+
+        .dark .bg-gray-200 {
+            background-color: #374151;
+        }
+
+        .dark .hover\:bg-gray-300:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="border-b border-gray-200 bg-white">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl font-bold text-red-600">TOYOTA</span>
+                <span class="text-sm text-gray-600">AI Vehicle Matcher</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="text-sm text-gray-600 hover:text-gray-900">
+                    My Matches <span class="ml-1 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">0</span>
+                </button>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition">
+                    <svg id="darkModeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        <!-- Title Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-3">Find Your Perfect Toyota</h1>
+            <p class="text-gray-600 text-lg">Tell us your preferences and our AI will recommend the best match from 6,200+ vehicles</p>
+        </div>
+
+        <!-- Main Form Container -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+            
+            <!-- Budget & Financing Section -->
+            <div class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Budget & Financing</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Maximum Price -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Maximum Price</label>
+                            <span id="priceValue" class="text-sm font-semibold text-red-600">$20,000</span>
+                        </div>
+                        <input type="range" id="price" name="price" min="10000" max="50000" step="1000" value="20000" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>$10,000</span>
+                            <span>$50,000</span>
+                        </div>
+                    </div>
+
+                    <!-- Finance Monthly -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Finance Monthly</label>
+                            <span id="financeValue" class="text-sm font-semibold text-red-600">$300/mo</span>
+                        </div>
+                        <input type="range" id="finance_monthly" name="finance_monthly" min="100" max="1000" step="10" value="300" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>$100/mo</span>
+                            <span>$1,000/mo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Type & Lease Monthly -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+                    <div>
+                        <label class="text-sm font-medium text-gray-900 mb-3 block">Transmission</label>
+                        <div class="flex gap-6">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="transmission" value="Manual" checked class="w-4 h-4 text-red-600 accent-red-600">
+                                <span class="ml-2 text-sm text-gray-900">Manual</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="transmission" value="Automatic" class="w-4 h-4 text-red-600 accent-red-600">
+                                <span class="ml-2 text-sm text-gray-900">Automatic</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="transmission" value="Semi-Auto" class="w-4 h-4 text-red-600 accent-red-600">
+                                <span class="ml-2 text-sm text-gray-900">Semi-Auto</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Lease Monthly</label>
+                            <span id="leaseValue" class="text-sm font-semibold text-red-600">$250/mo</span>
+                        </div>
+                        <input type="range" id="lease_monthly" name="lease_monthly" min="100" max="1000" step="10" value="250" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>$100/mo</span>
+                            <span>$1,000/mo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Preferences -->
+            <div class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Vehicle Preferences</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-sm font-medium text-gray-900 block mb-2">Fuel Type</label>
+                        <select id="fuelType" name="fuelType" class="w-full px-4 py-3 bg-white border border-gray-200 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="Gasoline">Gasoline</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="Electric">Electric</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-gray-900 block mb-2">Model Year</label>
+                        <select id="year" name="year" class="w-full px-4 py-3 bg-white border border-gray-200 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="2015">2015</option>
+                            <option value="2016">2016</option>
+                            <option value="2017" selected>2017</option>
+                            <option value="2018">2018</option>
+                            <option value="2019">2019</option>
+                            <option value="2020">2020</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance & Efficiency -->
+            <div class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Performance & Efficiency</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Minimum Combined MPG -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Minimum Combined MPG</label>
+                            <span id="mpgValue" class="text-sm font-semibold text-red-600">30 MPG</span>
+                        </div>
+                        <input type="range" id="mpg" name="mpg" min="15" max="50" step="1" value="30" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>15 MPG</span>
+                            <span>50 MPG</span>
+                        </div>
+                    </div>
+
+                    <!-- Minimum Horsepower -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Minimum Horsepower</label>
+                            <span id="horsepowerValue" class="text-sm font-semibold text-red-600">150 HP</span>
+                        </div>
+                        <input type="range" id="horsepower" name="horsepower" min="100" max="400" step="10" value="150" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>100 HP</span>
+                            <span>400 HP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage & Lifestyle -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Usage & Lifestyle</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Annual Mileage -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-900">Annual Mileage</label>
+                            <span id="mileageValue" class="text-sm font-semibold text-red-600">15,000 miles/yr</span>
+                        </div>
+                        <input type="range" id="mileage" name="mileage" min="5000" max="50000" step="1000" value="15000" class="w-full h-2 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>5,000</span>
+                            <span>50,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-center pt-6">
+                <button id="submitBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-12 rounded-lg shadow-md transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                    Find My Perfect Match
+                </button>
+            </div>
+
+            <!-- Prediction Result -->
+            <div id="resultContainer" class="hidden mt-8 p-6 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">Our AI recommends:</p>
+                <p id="resultModel" class="text-3xl font-bold text-green-600 mb-4"></p>
+                <div id="resultDetails" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Year:</span>
+                        <span id="resultYear" class="font-semibold text-gray-900 ml-2"></span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Price:</span>
+                        <span id="resultPrice" class="font-semibold text-gray-900 ml-2"></span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">MPG:</span>
+                        <span id="resultMpg" class="font-semibold text-gray-900 ml-2"></span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Power:</span>
+                        <span id="resultHorsepower" class="font-semibold text-gray-900 ml-2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorContainer" class="hidden mt-8 p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+                <p class="text-sm text-red-600" id="errorMessage"></p>
+            </div>
+        </div>
+
+        <!-- Footer Text -->
+        <p class="text-center text-sm text-gray-500">
+            Our AI will analyze your preferences and recommend the best Toyota from our database of 6,200+ vehicles
+        </p>
+    </div>
+
+    <script>
+        // Update slider values in real-time
+        const priceSlider = document.getElementById('price');
+        const priceValue = document.getElementById('priceValue');
+        priceSlider.addEventListener('input', (e) => {
+            priceValue.textContent = `$${parseInt(e.target.value).toLocaleString()}`;
+        });
+
+        const financeSlider = document.getElementById('finance_monthly');
+        const financeValue = document.getElementById('financeValue');
+        financeSlider.addEventListener('input', (e) => {
+            financeValue.textContent = `$${e.target.value}/mo`;
+        });
+
+        const leaseSlider = document.getElementById('lease_monthly');
+        const leaseValue = document.getElementById('leaseValue');
+        leaseSlider.addEventListener('input', (e) => {
+            leaseValue.textContent = `$${e.target.value}/mo`;
+        });
+
+        const mpgSlider = document.getElementById('mpg');
+        const mpgValue = document.getElementById('mpgValue');
+        mpgSlider.addEventListener('input', (e) => {
+            mpgValue.textContent = `${e.target.value} MPG`;
+        });
+
+        const horsepowerSlider = document.getElementById('horsepower');
+        const horsepowerValue = document.getElementById('horsepowerValue');
+        horsepowerSlider.addEventListener('input', (e) => {
+            horsepowerValue.textContent = `${e.target.value} HP`;
+        });
+
+        const mileageSlider = document.getElementById('mileage');
+        const mileageValue = document.getElementById('mileageValue');
+        mileageSlider.addEventListener('input', (e) => {
+            mileageValue.textContent = `${parseInt(e.target.value).toLocaleString()} miles/yr`;
+        });
+
+        // Dark mode toggle with icon change and localStorage persistence
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.body.classList.add('dark');
+            updateDarkModeIcon(true);
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            updateDarkModeIcon(isDark);
+        });
+
+        function updateDarkModeIcon(isDark) {
+            if (isDark) {
+                // Sun icon for light mode
+                darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+            } else {
+                // Moon icon for dark mode
+                darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+            }
+        }
+
+        // Handle form submission
+        const submitBtn = document.getElementById('submitBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorContainer = document.getElementById('errorContainer');
+        const resultModel = document.getElementById('resultModel');
+        const errorMessage = document.getElementById('errorMessage');
+
+        submitBtn.addEventListener('click', async () => {
+            // Hide previous results/errors
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner inline-block mr-2"></div> Finding Your Match...';
+
+            // Collect form data
+            const formData = {
+                year: document.getElementById('year').value,
+                price: document.getElementById('price').value,
+                transmission: document.querySelector('input[name="transmission"]:checked').value,
+                mileage: document.getElementById('mileage').value,
+                fuelType: document.getElementById('fuelType').value,
+                mpg: document.getElementById('mpg').value,
+                finance_monthly: document.getElementById('finance_monthly').value,
+                lease_monthly: document.getElementById('lease_monthly').value,
+                horsepower: document.getElementById('horsepower').value
+            };
+
+            try {
+                // Send POST request to Django backend
+                const response = await fetch('/api/predict/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                // Display result
+                if (data.model === 'No match found') {
+                    errorMessage.textContent = data.message || 'No matching cars found. Try adjusting your criteria.';
+                    errorContainer.classList.remove('hidden');
+                } else {
+                    resultModel.textContent = data.model;
+                    
+                    // Display additional details if available
+                    if (data.year) document.getElementById('resultYear').textContent = data.year;
+                    if (data.price) document.getElementById('resultPrice').textContent = data.price;
+                    if (data.mpg) document.getElementById('resultMpg').textContent = data.mpg;
+                    if (data.horsepower) document.getElementById('resultHorsepower').textContent = data.horsepower;
+                    
+                    resultContainer.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Unable to get prediction. Please try again.';
+                errorContainer.classList.remove('hidden');
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Find My Perfect Match';
+            }
+        });
+
+        // Get CSRF token for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
