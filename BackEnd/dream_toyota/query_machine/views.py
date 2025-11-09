@@ -16,6 +16,7 @@ def login(request):
 def predict(request):
     """
     API endpoint to predict car model based on user preferences
+    Returns top 3 matches
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=400)
@@ -57,7 +58,7 @@ def predict(request):
             csv_path = os.path.join(settings.BASE_DIR, 'data', 'toyota.csv')
             if not os.path.exists(csv_path):
                 return JsonResponse({
-                    'model': 'No match found',
+                    'matches': [],
                     'message': f'Database file not found. Please contact support.'
                 }, status=200)
         
@@ -129,7 +130,7 @@ def predict(request):
         
         print("=" * 50)
         
-        # Find the BEST match based on similarity to user input
+        # Find the TOP 3 matches based on similarity to user input
         if not filtered_df.empty:
             # Calculate similarity score for each car
             def calculate_similarity_score(row):
@@ -187,34 +188,47 @@ def predict(request):
             filtered_df['similarity_score'] = filtered_df.apply(calculate_similarity_score, axis=1)
             
             # Sort by similarity score (highest first), then by price (lowest first) as tiebreaker
-            best_match = filtered_df.sort_values(by=['similarity_score', 'price'], ascending=[False, True]).iloc[0]
+            sorted_df = filtered_df.sort_values(by=['similarity_score', 'price'], ascending=[False, True])
             
-            print(f"BEST MATCH FOUND (Similarity: {best_match['similarity_score']:.2f}%): {best_match['model']}")
-            print(f"Year: {best_match['year']}")
-            print(f"Price: ${best_match['price']:,.0f} (User: ${max_price})")
-            print(f"Transmission: {best_match['transmission']}")
-            print(f"Mileage: {best_match['mileage']:,.0f} (User: {max_mileage})")
-            print(f"Fuel Type: {best_match['fuelType']}")
-            print(f"MPG: {best_match['mpg']:.1f} (User: {mpg})")
-            print(f"Finance: ${best_match['finance_monthly']:.2f}/mo (User: ${financeMonthly})")
-            print(f"Lease: ${best_match['lease_monthly']:.2f}/mo (User: ${leaseMonthly})")
-            print(f"Horsepower: {best_match['horsepower']} (User: {horsepower})")
+            # Get top 3 matches
+            top_matches = sorted_df.head(3)
+            
+            print(f"TOP 3 MATCHES FOUND:")
+            matches_list = []
+            
+            for idx, (_, match) in enumerate(top_matches.iterrows(), 1):
+                print(f"\nMatch #{idx} (Similarity: {match['similarity_score']:.2f}%): {match['model']}")
+                print(f"  Year: {match['year']}")
+                print(f"  Price: ${match['price']:,.0f}")
+                print(f"  Transmission: {match['transmission']}")
+                print(f"  Mileage: {match['mileage']:,.0f}")
+                print(f"  Fuel Type: {match['fuelType']}")
+                print(f"  MPG: {match['mpg']:.1f}")
+                print(f"  Finance: ${match['finance_monthly']:.2f}/mo")
+                print(f"  Lease: ${match['lease_monthly']:.2f}/mo")
+                print(f"  Horsepower: {match['horsepower']}")
+                
+                # Format match data
+                match_data = {
+                    'model': str(match['model']),
+                    'year': str(int(match['year'])),
+                    'price': f"${int(match['price']):,}",
+                    'mpg': f"{float(match['mpg']):.1f} MPG",
+                    'horsepower': f"{int(match['horsepower'])} HP",
+                    'transmission': str(match['transmission']).strip(),
+                    'mileage': f"{int(match['mileage']):,} miles",
+                    'fuelType': str(match['fuelType']).strip(),
+                    'finance_monthly': f"${float(match['finance_monthly']):.2f}/mo",
+                    'lease_monthly': f"${float(match['lease_monthly']):.2f}/mo",
+                    'similarity_score': f"{match['similarity_score']:.1f}%"
+                }
+                matches_list.append(match_data)
+            
             print("=" * 50)
             
-            # Format response exactly as the frontend expects
             response_data = {
-                'model': str(best_match['model']),
-                'year': str(int(best_match['year'])),
-                'price': f"${int(best_match['price']):,}",
-                'mpg': f"{float(best_match['mpg']):.1f} MPG",
-                'horsepower': f"{int(best_match['horsepower'])} HP",
-                'transmission': str(best_match['transmission']).strip(),
-                'mileage': f"{int(best_match['mileage']):,} miles",
-                'fuelType': str(best_match['fuelType']).strip(),
-                'finance_monthly': f"${float(best_match['finance_monthly']):.2f}/mo",
-                'lease_monthly': f"${float(best_match['lease_monthly']):.2f}/mo",
-                'total_matches': int(len(filtered_df)),
-                'similarity_score': f"{best_match['similarity_score']:.1f}%"
+                'matches': matches_list,
+                'total_matches': int(len(filtered_df))
             }
             
             return JsonResponse(response_data)
@@ -223,23 +237,23 @@ def predict(request):
             print("=" * 50)
             # No matches found
             return JsonResponse({
-                'model': 'No match found',
+                'matches': [],
                 'message': 'No matching cars found based on your criteria. Try adjusting your filters.'
             }, status=200)
     
     except json.JSONDecodeError:
         return JsonResponse({
-            'model': 'No match found',
+            'matches': [],
             'message': 'Invalid request format'
         }, status=200)
     except FileNotFoundError:
         return JsonResponse({
-            'model': 'No match found',
+            'matches': [],
             'message': 'Database file not found. Please contact support.'
         }, status=200)
     except KeyError as e:
         return JsonResponse({
-            'model': 'No match found',
+            'matches': [],
             'message': f'Missing data column: {str(e)}'
         }, status=200)
     except Exception as e:
@@ -247,6 +261,6 @@ def predict(request):
         print("ERROR:", str(e))
         print(traceback.format_exc())
         return JsonResponse({
-            'model': 'No match found',
+            'matches': [],
             'message': f'An error occurred: {str(e)}'
         }, status=200)
