@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 import json
-from collections import defaultdict
 import pandas as pd
+import os
 
 def index(request):
     return render(request, 'index.html')
@@ -24,57 +25,228 @@ def predict(request):
         
         # Extract form data
         year = data.get('year')
-        price = data.get('price')
+        max_price = data.get('price')
         transmission = data.get('transmission')
-        mileage = data.get('mileage')
-        fuel_type = data.get('fuelType')
+        max_mileage = data.get('mileage')
+        fuelType = data.get('fuelType')
         mpg = data.get('mpg')
-        finance_monthly = data.get('finance_monthly')
-        lease_monthly = data.get('lease_monthly')
+        financeMonthly = data.get('finance_monthly')
+        leaseMonthly = data.get('lease_monthly')
         horsepower = data.get('horsepower')
-        # Yay!S
-        # TODO: Implement actual ML model prediction logic here
-        # For now, returning a mock response
-        df: pd.DataFrame = pd.read_csv('toyota.csv')
-        temp_mixed_list = []
-        recommended_models = dict()
-        for index, row in df.iterrows():
-          temp_mixed_list.append((row['year']))
-          temp_mixed_list.append((row['price']))
-          temp_mixed_list.append((row['transmission']))
-          temp_mixed_list.append((row['mileage']))
-          temp_mixed_list.append((row['fuelType']))
-          temp_mixed_list.append((row['mpg']))
-          temp_mixed_list.append((row['finance_monthly']))
-          temp_mixed_list.append((row['lease_monthly']))
-          temp_mixed_list.append((row['horsepower']))
-          recommended_models[tuple(temp_mixed_list)] = (row['model'])
-          temp_mixed_list.clear()
         
-        # # Mock response based on criteria
-        # recommended_models = {
-        #     'Gasoline': 'Toyota Camry SE',
-        #     'Hybrid': 'Toyota Prius Prime',
-        #     'Diesel': 'Toyota Hilux',
-        #     'Electric': 'Toyota bZ4X'
-        # }
-        user_input = (str(year), str(price), str(transmission), str(mileage), str(fuel_type), str(mpg), str(finance_monthly), str(lease_monthly), str(horsepower))
-        model = recommended_models.get(user_input, 'Toyota Camry')
+        # DEBUG: Print received data
+        print("=" * 50)
+        print("RECEIVED DATA:")
+        print(f"Year: {year}")
+        print(f"Max Price: {max_price}")
+        print(f"Transmission: {transmission}")
+        print(f"Max Mileage: {max_mileage}")
+        print(f"Fuel Type: {fuelType}")
+        print(f"MPG: {mpg}")
+        print(f"Finance Monthly: {financeMonthly}")
+        print(f"Lease Monthly: {leaseMonthly}")
+        print(f"Horsepower: {horsepower}")
+        print("=" * 50)
         
-        response_data = {
-            'model': model,
-            'year': year,
-            'price': f"${int(price):,}",
-            'mpg': f"{mpg} MPG",
-            'horsepower': f"{horsepower} HP",
-            'transmission': transmission,
-            'finance_monthly': f"${finance_monthly}/mo",
-            'lease_monthly': f"${lease_monthly}/mo"
-        }
+        # Load the CSV file with proper path handling
+        csv_path = os.path.join(settings.BASE_DIR, 'toyota.csv')
         
-        return JsonResponse(response_data)
+        # Check if file exists
+        if not os.path.exists(csv_path):
+            # Try alternative path in 'data' folder
+            csv_path = os.path.join(settings.BASE_DIR, 'data', 'toyota.csv')
+            if not os.path.exists(csv_path):
+                return JsonResponse({
+                    'model': 'No match found',
+                    'message': f'Database file not found. Please contact support.'
+                }, status=200)
         
+        df = pd.read_csv(csv_path)
+        
+        # Clean column names (remove extra spaces)
+        df.columns = df.columns.str.strip()
+        
+        # DEBUG: Print initial dataframe info
+        print(f"Total records in CSV: {len(df)}")
+        print(f"Columns: {df.columns.tolist()}")
+        
+        # Start with all data
+        filtered_df = df.copy()
+        print(f"Starting with {len(filtered_df)} records")
+        
+        # Apply filters with STRICT matching and 5% tolerance
+        if year:
+            year_val = int(year)
+            # STRICT: Exact year match only (0% tolerance)
+            filtered_df = filtered_df[filtered_df['year'] == year_val]
+            print(f"After STRICT year filter (={year_val}): {len(filtered_df)} records")
+        
+        if max_price:
+            price_val = float(max_price)
+            # Allow only 5% higher price
+            filtered_df = filtered_df[filtered_df['price'] <= price_val * 1.05]
+            print(f"After price filter (≤${price_val * 1.05:,.0f}): {len(filtered_df)} records")
+        
+        if transmission:
+            # STRICT: Exact match only for transmission
+            filtered_df = filtered_df[filtered_df['transmission'].str.strip().str.lower() == transmission.lower()]
+            print(f"After transmission filter ({transmission}): {len(filtered_df)} records")
+        
+        if max_mileage:
+            mileage_val = float(max_mileage)
+            # Allow only 5% higher mileage
+            filtered_df = filtered_df[filtered_df['mileage'] <= mileage_val * 1.05]
+            print(f"After mileage filter (≤{mileage_val * 1.05:,.0f}): {len(filtered_df)} records")
+        
+        if fuelType:
+            # STRICT: Exact match only for fuel type
+            filtered_df = filtered_df[filtered_df['fuelType'].str.strip().str.lower() == fuelType.lower()]
+            print(f"After fuel type filter ({fuelType}): {len(filtered_df)} records")
+        
+        if mpg:
+            mpg_val = float(mpg)
+            # Allow only 5% lower MPG
+            filtered_df = filtered_df[filtered_df['mpg'] >= mpg_val * 0.95]
+            print(f"After MPG filter (≥{mpg_val * 0.95:.1f}): {len(filtered_df)} records")
+        
+        if financeMonthly:
+            finance_val = float(financeMonthly)
+            # Allow only 5% higher monthly payment
+            filtered_df = filtered_df[filtered_df['finance_monthly'] <= finance_val * 1.05]
+            print(f"After finance filter (≤${finance_val * 1.05:.2f}/mo): {len(filtered_df)} records")
+        
+        if leaseMonthly:
+            lease_val = float(leaseMonthly)
+            # Allow only 5% higher monthly payment
+            filtered_df = filtered_df[filtered_df['lease_monthly'] <= lease_val * 1.05]
+            print(f"After lease filter (≤${lease_val * 1.05:.2f}/mo): {len(filtered_df)} records")
+        
+        if horsepower:
+            hp_val = float(horsepower)
+            # Allow only 5% lower horsepower
+            filtered_df = filtered_df[filtered_df['horsepower'] >= hp_val * 0.95]
+            print(f"After horsepower filter (≥{hp_val * 0.95:.0f}): {len(filtered_df)} records")
+        
+        print("=" * 50)
+        
+        # Find the BEST match based on similarity to user input
+        if not filtered_df.empty:
+            # Calculate similarity score for each car
+            def calculate_similarity_score(row):
+                score = 0.0
+                total_weight = 0.0
+                
+                # Price similarity (weight: 3) - lower is better, closer to user input is better
+                if max_price:
+                    price_val = float(max_price)
+                    price_diff = abs(row['price'] - price_val) / price_val
+                    score += (1 - price_diff) * 3
+                    total_weight += 3
+                
+                # Mileage similarity (weight: 2) - lower is better
+                if max_mileage:
+                    mileage_val = float(max_mileage)
+                    mileage_diff = abs(row['mileage'] - mileage_val) / mileage_val
+                    score += (1 - mileage_diff) * 2
+                    total_weight += 2
+                
+                # MPG similarity (weight: 2) - closer to user input is better
+                if mpg:
+                    mpg_val = float(mpg)
+                    mpg_diff = abs(row['mpg'] - mpg_val) / mpg_val
+                    score += (1 - mpg_diff) * 2
+                    total_weight += 2
+                
+                # Finance monthly similarity (weight: 2)
+                if financeMonthly:
+                    finance_val = float(financeMonthly)
+                    finance_diff = abs(row['finance_monthly'] - finance_val) / finance_val
+                    score += (1 - finance_diff) * 2
+                    total_weight += 2
+                
+                # Lease monthly similarity (weight: 2)
+                if leaseMonthly:
+                    lease_val = float(leaseMonthly)
+                    lease_diff = abs(row['lease_monthly'] - lease_val) / lease_val
+                    score += (1 - lease_diff) * 2
+                    total_weight += 2
+                
+                # Horsepower similarity (weight: 1.5) - closer to user input is better
+                if horsepower:
+                    hp_val = float(horsepower)
+                    hp_diff = abs(row['horsepower'] - hp_val) / hp_val
+                    score += (1 - hp_diff) * 1.5
+                    total_weight += 1.5
+                
+                # Normalize score (0-100)
+                if total_weight > 0:
+                    return (score / total_weight) * 100
+                return 0
+            
+            # Calculate similarity scores for all filtered cars
+            filtered_df['similarity_score'] = filtered_df.apply(calculate_similarity_score, axis=1)
+            
+            # Sort by similarity score (highest first), then by price (lowest first) as tiebreaker
+            best_match = filtered_df.sort_values(by=['similarity_score', 'price'], ascending=[False, True]).iloc[0]
+            
+            print(f"BEST MATCH FOUND (Similarity: {best_match['similarity_score']:.2f}%): {best_match['model']}")
+            print(f"Year: {best_match['year']}")
+            print(f"Price: ${best_match['price']:,.0f} (User: ${max_price})")
+            print(f"Transmission: {best_match['transmission']}")
+            print(f"Mileage: {best_match['mileage']:,.0f} (User: {max_mileage})")
+            print(f"Fuel Type: {best_match['fuelType']}")
+            print(f"MPG: {best_match['mpg']:.1f} (User: {mpg})")
+            print(f"Finance: ${best_match['finance_monthly']:.2f}/mo (User: ${financeMonthly})")
+            print(f"Lease: ${best_match['lease_monthly']:.2f}/mo (User: ${leaseMonthly})")
+            print(f"Horsepower: {best_match['horsepower']} (User: {horsepower})")
+            print("=" * 50)
+            
+            # Format response exactly as the frontend expects
+            response_data = {
+                'model': str(best_match['model']),
+                'year': str(int(best_match['year'])),
+                'price': f"${int(best_match['price']):,}",
+                'mpg': f"{float(best_match['mpg']):.1f} MPG",
+                'horsepower': f"{int(best_match['horsepower'])} HP",
+                'transmission': str(best_match['transmission']).strip(),
+                'mileage': f"{int(best_match['mileage']):,} miles",
+                'fuelType': str(best_match['fuelType']).strip(),
+                'finance_monthly': f"${float(best_match['finance_monthly']):.2f}/mo",
+                'lease_monthly': f"${float(best_match['lease_monthly']):.2f}/mo",
+                'total_matches': int(len(filtered_df)),
+                'similarity_score': f"{best_match['similarity_score']:.1f}%"
+            }
+            
+            return JsonResponse(response_data)
+        else:
+            print("NO MATCHES FOUND")
+            print("=" * 50)
+            # No matches found
+            return JsonResponse({
+                'model': 'No match found',
+                'message': 'No matching cars found based on your criteria. Try adjusting your filters.'
+            }, status=200)
+    
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        return JsonResponse({
+            'model': 'No match found',
+            'message': 'Invalid request format'
+        }, status=200)
+    except FileNotFoundError:
+        return JsonResponse({
+            'model': 'No match found',
+            'message': 'Database file not found. Please contact support.'
+        }, status=200)
+    except KeyError as e:
+        return JsonResponse({
+            'model': 'No match found',
+            'message': f'Missing data column: {str(e)}'
+        }, status=200)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        import traceback
+        print("ERROR:", str(e))
+        print(traceback.format_exc())
+        return JsonResponse({
+            'model': 'No match found',
+            'message': f'An error occurred: {str(e)}'
+        }, status=200)

@@ -171,9 +171,9 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <label class="text-sm font-medium text-gray-900">Maximum Price</label>
-                            <span id="priceValue" class="text-sm font-semibold text-red-600">$20,000</span>
+                            <span id="priceValue" class="text-sm font-semibold text-red-600">$25,000</span>
                         </div>
-                        <input type="range" id="price" name="price" min="10000" max="50000" step="1000" value="20000" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="price" name="price" min="10000" max="50000" step="1000" value="25000" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>$10,000</span>
                             <span>$50,000</span>
@@ -184,9 +184,9 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <label class="text-sm font-medium text-gray-900">Finance Monthly</label>
-                            <span id="financeValue" class="text-sm font-semibold text-red-600">$300/mo</span>
+                            <span id="financeValue" class="text-sm font-semibold text-red-600">$400/mo</span>
                         </div>
-                        <input type="range" id="finance_monthly" name="finance_monthly" min="100" max="1000" step="10" value="300" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="finance_monthly" name="finance_monthly" min="100" max="1000" step="10" value="400" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>$100/mo</span>
                             <span>$1,000/mo</span>
@@ -217,9 +217,9 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <label class="text-sm font-medium text-gray-900">Lease Monthly</label>
-                            <span id="leaseValue" class="text-sm font-semibold text-red-600">$250/mo</span>
+                            <span id="leaseValue" class="text-sm font-semibold text-red-600">$350/mo</span>
                         </div>
-                        <input type="range" id="lease_monthly" name="lease_monthly" min="100" max="1000" step="10" value="250" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="lease_monthly" name="lease_monthly" min="100" max="1000" step="10" value="350" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>$100/mo</span>
                             <span>$1,000/mo</span>
@@ -252,10 +252,6 @@
                             <option value="2018">2018</option>
                             <option value="2019">2019</option>
                             <option value="2020">2020</option>
-                            <option value="2021">2021</option>
-                            <option value="2022">2022</option>
-                            <option value="2023">2023</option>
-                            <option value="2024">2024</option>
                         </select>
                     </div>
                 </div>
@@ -270,9 +266,9 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <label class="text-sm font-medium text-gray-900">Minimum Combined MPG</label>
-                            <span id="mpgValue" class="text-sm font-semibold text-red-600">30 MPG</span>
+                            <span id="mpgValue" class="text-sm font-semibold text-red-600">25 MPG</span>
                         </div>
-                        <input type="range" id="mpg" name="mpg" min="15" max="50" step="1" value="30" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="mpg" name="mpg" min="15" max="50" step="1" value="25" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>15 MPG</span>
                             <span>50 MPG</span>
@@ -283,9 +279,9 @@
                     <div>
                         <div class="flex justify-between mb-2">
                             <label class="text-sm font-medium text-gray-900">Minimum Horsepower</label>
-                            <span id="horsepowerValue" class="text-sm font-semibold text-red-600">150 HP</span>
+                            <span id="horsepowerValue" class="text-sm font-semibold text-red-600">100 HP</span>
                         </div>
-                        <input type="range" id="horsepower" name="horsepower" min="100" max="400" step="10" value="150" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="horsepower" name="horsepower" min="100" max="400" step="10" value="100" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>100 HP</span>
                             <span>400 HP</span>
@@ -302,13 +298,13 @@
                     <!-- Annual Mileage -->
                     <div>
                         <div class="flex justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-900">Annual Mileage</label>
-                            <span id="mileageValue" class="text-sm font-semibold text-red-600">15,000 miles/yr</span>
+                            <label class="text-sm font-medium text-gray-900">Maximum Mileage</label>
+                            <span id="mileageValue" class="text-sm font-semibold text-red-600">30,000 miles</span>
                         </div>
-                        <input type="range" id="mileage" name="mileage" min="5000" max="50000" step="1000" value="15000" class="w-full h-2 rounded-lg cursor-pointer">
+                        <input type="range" id="mileage" name="mileage" min="5000" max="100000" step="1000" value="30000" class="w-full h-2 rounded-lg cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>5,000</span>
-                            <span>50,000</span>
+                            <span>100,000</span>
                         </div>
                     </div>
                 </div>
@@ -342,6 +338,9 @@
                         <span class="text-gray-600">Power:</span>
                         <span id="resultHorsepower" class="font-semibold text-gray-900 ml-2"></span>
                     </div>
+                </div>
+                <div class="mt-4 text-xs text-gray-500">
+                    <span id="totalMatches"></span> matching vehicles found
                 </div>
             </div>
 
@@ -392,7 +391,7 @@
         const mileageSlider = document.getElementById('mileage');
         const mileageValue = document.getElementById('mileageValue');
         mileageSlider.addEventListener('input', (e) => {
-            mileageValue.textContent = `${parseInt(e.target.value).toLocaleString()} miles/yr`;
+            mileageValue.textContent = `${parseInt(e.target.value).toLocaleString()} miles`;
         });
 
         // Dark mode toggle with icon change and localStorage persistence
@@ -451,6 +450,8 @@
                 horsepower: document.getElementById('horsepower').value
             };
 
+            console.log('Sending data:', formData);
+
             try {
                 // Send POST request to Django backend
                 const response = await fetch('/api/predict/', {
@@ -467,6 +468,7 @@
                 }
 
                 const data = await response.json();
+                console.log('Received data:', data);
 
                 // Display result
                 if (data.model === 'No match found') {
@@ -480,6 +482,7 @@
                     if (data.price) document.getElementById('resultPrice').textContent = data.price;
                     if (data.mpg) document.getElementById('resultMpg').textContent = data.mpg;
                     if (data.horsepower) document.getElementById('resultHorsepower').textContent = data.horsepower;
+                    if (data.total_matches) document.getElementById('totalMatches').textContent = data.total_matches;
                     
                     resultContainer.classList.remove('hidden');
                 }
