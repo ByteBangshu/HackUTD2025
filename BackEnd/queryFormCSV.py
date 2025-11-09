@@ -41,7 +41,7 @@ if fuelType:
     filtered_df = filtered_df[filtered_df['fuelType'].str.strip() == fuelType]
 
 if mpg:
-    filtered_df = filtered_df[filtered_df['mpg'] <= float(mpg)]
+    filtered_df = filtered_df[filtered_df['mpg'] >= float(mpg)]
 
 if financeMonthly:
     filtered_df = filtered_df[filtered_df['finance_monthly'] <= float(financeMonthly)]
@@ -50,7 +50,7 @@ if LeaseMonthly:
     filtered_df = filtered_df[filtered_df['lease_monthly'] <= float(LeaseMonthly)]
 
 if housePower:
-    filtered_df = filtered_df[filtered_df['horsepower'] <= float(housePower)]
+    filtered_df = filtered_df[filtered_df['horsepower'] >= float(housePower)]
     
 # Find and display the best match (lowest price)
 if not filtered_df.empty:
