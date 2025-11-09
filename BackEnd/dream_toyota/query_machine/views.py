@@ -32,23 +32,23 @@ def predict(request):
         finance_monthly = data.get('finance_monthly')
         lease_monthly = data.get('lease_monthly')
         horsepower = data.get('horsepower')
-        
+        # Yay!S
         # TODO: Implement actual ML model prediction logic here
         # For now, returning a mock response
         df: pd.DataFrame = pd.read_csv('toyota.csv')
         temp_mixed_list = []
         recommended_models = dict()
         for index, row in df.iterrows():
-          temp_mixed_list.append(str(row['year']))
-          temp_mixed_list.append(str(row['price']))
-          temp_mixed_list.append(str(row['transmission']))
-          temp_mixed_list.append(str(row['mileage']))
-          temp_mixed_list.append(str(row['fuelType']))
-          temp_mixed_list.append(str(row['mpg']))
-          temp_mixed_list.append(str(row['finance_monthly']))
-          temp_mixed_list.append(str(row['lease_monthly']))
-          temp_mixed_list.append(str(row['horsepower']))
-          recommended_models[tuple(temp_mixed_list)] = str(row['model'])
+          temp_mixed_list.append((row['year']))
+          temp_mixed_list.append((row['price']))
+          temp_mixed_list.append((row['transmission']))
+          temp_mixed_list.append((row['mileage']))
+          temp_mixed_list.append((row['fuelType']))
+          temp_mixed_list.append((row['mpg']))
+          temp_mixed_list.append((row['finance_monthly']))
+          temp_mixed_list.append((row['lease_monthly']))
+          temp_mixed_list.append((row['horsepower']))
+          recommended_models[tuple(temp_mixed_list)] = (row['model'])
           temp_mixed_list.clear()
         
         # # Mock response based on criteria
