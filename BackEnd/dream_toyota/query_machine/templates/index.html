@@ -357,159 +357,170 @@
         </p>
     </div>
 
-    <script>
-        // Update slider values in real-time
-        const priceSlider = document.getElementById('price');
-        const priceValue = document.getElementById('priceValue');
-        priceSlider.addEventListener('input', (e) => {
-            priceValue.textContent = `$${parseInt(e.target.value).toLocaleString()}`;
+<script>
+// Enhanced form submission handler - replace existing submitBtn.addEventListener
+submitBtn.addEventListener('click', async () => {
+    // Hide previous results/errors
+    resultContainer.classList.add('hidden');
+    errorContainer.classList.add('hidden');
+    
+    // Hide all matches container if it exists
+    const allMatchesContainer = document.getElementById('allMatchesContainer');
+    if (allMatchesContainer) {
+        allMatchesContainer.classList.add('hidden');
+    }
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner inline-block mr-2"></div> Finding Your Matches...';
+
+    // Collect form data
+    const formData = {
+        year: document.getElementById('year').value,
+        price: document.getElementById('price').value,
+        transmission: document.querySelector('input[name="transmission"]:checked').value,
+        mileage: document.getElementById('mileage').value,
+        fuelType: document.getElementById('fuelType').value,
+        mpg: document.getElementById('mpg').value,
+        finance_monthly: document.getElementById('finance_monthly').value,
+        lease_monthly: document.getElementById('lease_monthly').value,
+        horsepower: document.getElementById('horsepower').value
+    };
+
+    try {
+        // Send POST request to Django backend
+        const response = await fetch('/api/predict/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
         });
 
-        const financeSlider = document.getElementById('finance_monthly');
-        const financeValue = document.getElementById('financeValue');
-        financeSlider.addEventListener('input', (e) => {
-            financeValue.textContent = `$${e.target.value}/mo`;
-        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
 
-        const leaseSlider = document.getElementById('lease_monthly');
-        const leaseValue = document.getElementById('leaseValue');
-        leaseSlider.addEventListener('input', (e) => {
-            leaseValue.textContent = `$${e.target.value}/mo`;
-        });
+        const data = await response.json();
 
-        const mpgSlider = document.getElementById('mpg');
-        const mpgValue = document.getElementById('mpgValue');
-        mpgSlider.addEventListener('input', (e) => {
-            mpgValue.textContent = `${e.target.value} MPG`;
-        });
+        // Display result
+        if (data.success === false || data.model === 'No match found') {
+            errorMessage.textContent = data.message || 'No matching cars found. Try adjusting your criteria.';
+            errorContainer.classList.remove('hidden');
+        } else {
+            // Display best match
+            resultModel.textContent = data.model;
+            
+            if (data.year) document.getElementById('resultYear').textContent = data.year;
+            if (data.price) document.getElementById('resultPrice').textContent = data.price;
+            if (data.mpg) document.getElementById('resultMpg').textContent = data.mpg;
+            if (data.horsepower) document.getElementById('resultHorsepower').textContent = data.horsepower;
+            
+            resultContainer.classList.remove('hidden');
+            
+            // Display all matches if available
+            if (data.all_matches && data.all_matches.length > 1) {
+                displayAllMatches(data.all_matches, data.total_matches);
+            }
+        }
 
-        const horsepowerSlider = document.getElementById('horsepower');
-        const horsepowerValue = document.getElementById('horsepowerValue');
-        horsepowerSlider.addEventListener('input', (e) => {
-            horsepowerValue.textContent = `${e.target.value} HP`;
-        });
+    } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'Unable to get prediction. Please try again.';
+        errorContainer.classList.remove('hidden');
+    } finally {
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Find My Perfect Match';
+    }
+});
 
-        const mileageSlider = document.getElementById('mileage');
-        const mileageValue = document.getElementById('mileageValue');
-        mileageSlider.addEventListener('input', (e) => {
-            mileageValue.textContent = `${parseInt(e.target.value).toLocaleString()} miles/yr`;
-        });
-
-        // Dark mode toggle with icon change and localStorage persistence
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const darkModeIcon = document.getElementById('darkModeIcon');
+// Function to display all matches
+function displayAllMatches(matches, total) {
+    // Create container if it doesn't exist
+    let allMatchesContainer = document.getElementById('allMatchesContainer');
+    
+    if (!allMatchesContainer) {
+        allMatchesContainer = document.createElement('div');
+        allMatchesContainer.id = 'allMatchesContainer';
+        allMatchesContainer.className = 'mt-8';
+        resultContainer.parentElement.appendChild(allMatchesContainer);
+    }
+    
+    // Build HTML for all matches
+    let html = `
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">All Matching Vehicles (${total})</h3>
+                <span class="text-sm text-gray-600">Sorted by price (lowest first)</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    `;
+    
+    matches.forEach((match, idx) => {
+        const isFirst = idx === 0;
+        const borderColor = isFirst ? 'border-green-500' : 'border-gray-200';
+        const badge = isFirst ? '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Best Deal</span>' : '';
         
-        // Check for saved dark mode preference
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
-        if (isDarkMode) {
-            document.body.classList.add('dark');
-            updateDarkModeIcon(true);
-        }
-
-        darkModeToggle.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark');
-            localStorage.setItem('darkMode', isDark);
-            updateDarkModeIcon(isDark);
-        });
-
-        function updateDarkModeIcon(isDark) {
-            if (isDark) {
-                // Sun icon for light mode
-                darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-            } else {
-                // Moon icon for dark mode
-                darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-            }
-        }
-
-        // Handle form submission
-        const submitBtn = document.getElementById('submitBtn');
-        const resultContainer = document.getElementById('resultContainer');
-        const errorContainer = document.getElementById('errorContainer');
-        const resultModel = document.getElementById('resultModel');
-        const errorMessage = document.getElementById('errorMessage');
-
-        submitBtn.addEventListener('click', async () => {
-            // Hide previous results/errors
-            resultContainer.classList.add('hidden');
-            errorContainer.classList.add('hidden');
-
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="spinner inline-block mr-2"></div> Finding Your Match...';
-
-            // Collect form data
-            const formData = {
-                year: document.getElementById('year').value,
-                price: document.getElementById('price').value,
-                transmission: document.querySelector('input[name="transmission"]:checked').value,
-                mileage: document.getElementById('mileage').value,
-                fuelType: document.getElementById('fuelType').value,
-                mpg: document.getElementById('mpg').value,
-                finance_monthly: document.getElementById('finance_monthly').value,
-                lease_monthly: document.getElementById('lease_monthly').value,
-                horsepower: document.getElementById('horsepower').value
-            };
-
-            try {
-                // Send POST request to Django backend
-                const response = await fetch('/api/predict/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-
-                // Display result
-                if (data.model === 'No match found') {
-                    errorMessage.textContent = data.message || 'No matching cars found. Try adjusting your criteria.';
-                    errorContainer.classList.remove('hidden');
-                } else {
-                    resultModel.textContent = data.model;
-                    
-                    // Display additional details if available
-                    if (data.year) document.getElementById('resultYear').textContent = data.year;
-                    if (data.price) document.getElementById('resultPrice').textContent = data.price;
-                    if (data.mpg) document.getElementById('resultMpg').textContent = data.mpg;
-                    if (data.horsepower) document.getElementById('resultHorsepower').textContent = data.horsepower;
-                    
-                    resultContainer.classList.remove('hidden');
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                errorMessage.textContent = 'Unable to get prediction. Please try again.';
-                errorContainer.classList.remove('hidden');
-            } finally {
-                // Reset button
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Find My Perfect Match';
-            }
-        });
-
-        // Get CSRF token for Django
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-    </script>
+        html += `
+            <div class="border-2 ${borderColor} rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="font-bold text-lg text-gray-900">${match.model}</h4>
+                    ${badge}
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Year:</span>
+                        <span class="font-semibold">${match.year}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Price:</span>
+                        <span class="font-semibold text-red-600">${match.price_formatted}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Transmission:</span>
+                        <span class="font-semibold">${match.transmission}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Mileage:</span>
+                        <span class="font-semibold">${match.mileage_formatted}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Fuel Type:</span>
+                        <span class="font-semibold">${match.fuelType}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">MPG:</span>
+                        <span class="font-semibold">${match.mpg}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Horsepower:</span>
+                        <span class="font-semibold">${match.horsepower} HP</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Finance:</span>
+                        <span class="font-semibold">${match.finance_monthly_formatted}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Lease:</span>
+                        <span class="font-semibold">${match.lease_monthly_formatted}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+            </div>
+        </div>
+    `;
+    
+    allMatchesContainer.innerHTML = html;
+    allMatchesContainer.classList.remove('hidden');
+}
+</script>
 </body>
 </html>
