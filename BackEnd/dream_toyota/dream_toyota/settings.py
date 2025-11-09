@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'query_machine'
+    'query_machine',
+    'carpicker',
 ]
 
 MIDDLEWARE = [
